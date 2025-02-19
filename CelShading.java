@@ -89,7 +89,7 @@ public class CelShading {
 
         // Center the window on the screen
         GLFWVidMode vidmode = glfwGetVideoMode(glfwGetPrimaryMonitor());
-        glfwSetWindowPos(window, (vidmode.width() - 800) / 2, (vidmode.hegith() - 600) / 2);
+        glfwSetWindowPos(window, (vidmode.width() - 800) / 2, (vidmode.height() - 600) / 2);
 
         // Make the OpenGL context current
         glfwMakeContextCurrent(window);
