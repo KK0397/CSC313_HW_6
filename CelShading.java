@@ -18,7 +18,7 @@ import org.lwjgl.system.*;
 
 import java.nio.*;
 import static org.lwjgl.glfw.GLFW.*;
-import static org.lwjgl.openl.GL11.*;
+import static org.lwjgl.opengl.GL11.*;
 import static org.lwjgl.system.MemoryUtil.*;
 
 public class CelShading {
@@ -74,13 +74,13 @@ public class CelShading {
         }
 
         // Configure GLFW
-        glfwDefaultWIndowHints();
+        glfwDefaultWindowHints();
         glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE);
-        glfwWindowHint(GLFW_RESIZABLE, GLFE_TRUE);
+        glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);
 
         // Create the window
         window = glfwCreateWindow(800, 600, "Cel Shading with LWJGL", NULL, NULL);
-        if (window == null) {
+        if (window == NULL) {
             throw new RuntimeException("Failed to create the GLFW window.");
         }
         else {
@@ -117,7 +117,7 @@ public class CelShading {
 
         // Run the rendering loop until the user has attempted to close the window or pressed the ESC key
         while (!glfwWindowShouldClose(window)) {
-            glClear(GL_COLOR_BIT | GL_DEPTH_BUFFER_BIT); // Clear the framebuffer
+            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); // Clear the framebuffer
             setupCamera();
             renderOutline(model);
 
@@ -134,7 +134,7 @@ public class CelShading {
     private void cleanup() {
         // Free the key callback if it was set
         if (glfwSetKeyCallback(window, null) != null) {
-            glfwKeyCallback(window, null).free();
+            glfwSetKeyCallback(window, null).free();
         }
 
         // Destroy the window if it exists
@@ -180,9 +180,9 @@ public class CelShading {
         });
         matrix.flip();
 
-        glMultMatrix(matrix);   // Apply the matrix
+        glMultMatrixf(matrix);   // Apply the matrix
 
-        glTranslate(-eyeX, -eyeY, -eyeZ);   // Translate to camera position
+        glTranslatef(-eyeX, -eyeY, -eyeZ);   // Translate to camera position
     }
 
     private void setupCamera() {
@@ -271,14 +271,14 @@ public class CelShading {
                 float lightIntensity = calculateDiffuseLight(normal, lightDir);
 
                 // Use the calculated intensity to set the color
-                g1Color3f(lightIntensity, lightIntensity, lightIntensity);  // Expect shades of gray
+                glColor3f(lightIntensity, lightIntensity, lightIntensity);  // Expect shades of gray
             }
 
             // Render each vertex of the face
             for (int i = 0; i < 3; i++) {
-                int vertexIndex = face[i + 3];
+                int vertexIndex = face[i * 3];
                 float[] vertex = model.vertices.get(vertexIndex);
-                g1Vertex3f(vertex[0], vertex[1], vertex[2]);
+                glVertex3f(vertex[0], vertex[1], vertex[2]);
             }
         }
         glEnd();
@@ -357,7 +357,7 @@ public class CelShading {
         }
         glEnd();
 
-        glPolygonMode(GL_BLACK_GL_FILL); // Reset polygon mode
+        glPolygonMode(GL_BACK, GL_FILL); // Reset polygon mode
     }
 
     public static void main(String[] args) {
