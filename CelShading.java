@@ -332,32 +332,72 @@ public class CelShading {
     }
 
     public void renderOutline(Model model) {
-        glDisable(GL_LIGHTING); //Disable lighting for outline
+        glDisable(GL_LIGHTING); // Disable lighting for outline
 
-        glPolygonMode(GL_BACK, GL_LINE); // Render the back faces as wireframes
         glLineWidth(3.0f); // Set the outline thickness
-
         glColor3f(0.0f, 0.0f, 0.0f); // Black color for the outline
 
-        glBegin(GL_TRIANGLES);
+        // Camera position (assuming the camera is at (0, 0, 10) as per setupCamera)
+        float[] cameraPos = {0.0f, 0.0f, 10.0f};
+
+        // Threshold angle for silhouette detection (in radians)
+        float silhouetteThreshold = (float) Math.cos(Math.toRadians(90)); // 90 degrees threshold
+
+        glBegin(GL_LINES);
         for (int[] face : model.faces) {
-            for (int i = 0; i < 3; i++) {
-                int vertexIndex = face[i * 3];
+            // Calculate face normal
+            float[] normal = calculateFaceNormal(model, face);
+            if (normal == null) continue;
 
-                if (vertexIndex < 0 || vertexIndex >= model.vertices.size()) {
-                    System.out.println("Invalid vertex index: " + vertexIndex);
-                    continue;
+            // Calculate the view direction (from camera to the face)
+            float[] faceCenter = calculateFaceCenter(model, face);
+            float[] viewDir = {
+                    cameraPos[0] - faceCenter[0],
+                    cameraPos[1] - faceCenter[1],
+                    cameraPos[2] - faceCenter[2]
+            };
+
+            // Normalize the view direction
+            float viewDirLength = (float) Math.sqrt(viewDir[0] * viewDir[0] + viewDir[1] * viewDir[1] + viewDir[2] * viewDir[2]);
+            viewDir[0] /= viewDirLength;
+            viewDir[1] /= viewDirLength;
+            viewDir[2] /= viewDirLength;
+
+            // Calculate the dot product between the normal and the view direction
+            float dotProduct = normal[0] * viewDir[0] + normal[1] * viewDir[1] + normal[2] * viewDir[2];
+
+            // If the dot product is less than the threshold, it's a silhouette edge
+            if (dotProduct < silhouetteThreshold) {
+                // Render the edges of the face
+                for (int i = 0; i < 3; i++) {
+                    int vertexIndex1 = face[i * 3];
+                    int vertexIndex2 = face[((i + 1) % 3) * 3];
+
+                    float[] vertex1 = model.vertices.get(vertexIndex1);
+                    float[] vertex2 = model.vertices.get(vertexIndex2);
+
+                    // Render the edge with a slight offset (inflate the geometry)
+                    glVertex3f(vertex1[0] * 1.01f, vertex1[1] * 1.01f, vertex1[2] * 1.01f);
+                    glVertex3f(vertex2[0] * 1.01f, vertex2[1] * 1.01f, vertex2[2] * 1.01f);
                 }
-
-                float[] vertex = model.vertices.get(vertexIndex);
-
-                // Render the vertex with a slight offset (inflate the geometry)
-                glVertex3f(vertex[0] * 1.01f, vertex[1] * 1.0f, vertex[2] * 1.01f);
             }
         }
         glEnd();
+    }
 
-        glPolygonMode(GL_BACK, GL_FILL); // Reset polygon mode
+    private float[] calculateFaceCenter(Model model, int[] face) {
+        float[] center = {0.0f, 0.0f, 0.0f};
+        for (int i = 0; i < 3; i++) {
+            int vertexIndex = face[i * 3];
+            float[] vertex = model.vertices.get(vertexIndex);
+            center[0] += vertex[0];
+            center[1] += vertex[1];
+            center[2] += vertex[2];
+        }
+        center[0] /= 3;
+        center[1] /= 3;
+        center[2] /= 3;
+        return center;
     }
 
     public static void main(String[] args) {
